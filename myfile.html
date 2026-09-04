@@ -1,0 +1,3479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GeoGuard NER | Landslide Early Warning</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- ================= GRAPHICAL RISK ADD-ON CSS ================= -->
+
+<style>
+
+    /* Main graphical vulnerability panel */
+    .visual-risk-panel {
+        margin-top: 25px;
+        background: #ffffff;
+        border: 1px solid #e4eeeb;
+        border-radius: 18px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(16, 43, 58, 0.06);
+    }
+
+    .visual-risk-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    .visual-risk-header h3 {
+        margin: 4px 0 0;
+        color: #102b3a;
+        font-size: 20px;
+    }
+
+    .visual-risk-header p {
+        margin: 5px 0 0;
+        color: #71818a;
+        font-size: 11px;
+    }
+
+    .visual-live {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 9px;
+        font-weight: 800;
+        color: #16a889;
+    }
+
+    .visual-live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #16b89b;
+        animation: visualPulse 1.5s infinite;
+    }
+
+    @keyframes visualPulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(22, 184, 155, 0.5);
+        }
+
+        70% {
+            box-shadow: 0 0 0 9px rgba(22, 184, 155, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(22, 184, 155, 0);
+        }
+    }
+
+
+    /* Graphical risk overview */
+    .risk-visual-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+        gap: 25px;
+        align-items: center;
+    }
+
+
+    /* Donut chart */
+    .risk-donut-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .risk-donut {
+        width: 210px;
+        height: 210px;
+        border-radius: 50%;
+
+        background:
+            conic-gradient(
+                #19b78f 0deg 223deg,
+                #f3b544 223deg 310deg,
+                #f47768 310deg 346deg,
+                #d9415b 346deg 360deg
+            );
+
+        position: relative;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        box-shadow:
+            0 10px 30px rgba(16, 43, 58, 0.08);
+    }
+
+    .risk-donut::before {
+        content: "";
+        position: absolute;
+        width: 145px;
+        height: 145px;
+        background: white;
+        border-radius: 50%;
+    }
+
+    .donut-center {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .donut-center strong {
+        display: block;
+        font-size: 34px;
+        line-height: 1;
+        color: #102b3a;
+    }
+
+    .donut-center span {
+        font-size: 9px;
+        color: #71818a;
+        font-weight: 700;
+    }
+
+
+    /* Risk distribution bars */
+    .risk-distribution {
+        display: flex;
+        flex-direction: column;
+        gap: 17px;
+    }
+
+    .distribution-item {
+        width: 100%;
+    }
+
+    .distribution-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 7px;
+    }
+
+    .distribution-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #18313d;
+    }
+
+    .distribution-percent {
+        font-size: 11px;
+        font-weight: 900;
+        color: #18313d;
+    }
+
+    .distribution-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+    }
+
+    .distribution-bar {
+        width: 100%;
+        height: 9px;
+        background: #edf2f0;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .distribution-fill {
+        height: 100%;
+        border-radius: 20px;
+        width: 0;
+        animation: fillRiskBar 1.4s ease forwards;
+    }
+
+    .fill-low {
+        width: 62%;
+        background: #19b78f;
+    }
+
+    .fill-moderate {
+        width: 24%;
+        background: #f3b544;
+    }
+
+    .fill-high {
+        width: 10%;
+        background: #f47768;
+    }
+
+    .fill-critical {
+        width: 4%;
+        background: #d9415b;
+    }
+
+    @keyframes fillRiskBar {
+        from {
+            width: 0;
+        }
+    }
+
+
+    /* Individual vulnerable zone graphical cards */
+    .graphical-zones {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 25px;
+    }
+
+    .graph-zone {
+        border: 1px solid #e3ece9;
+        background: #f9fcfb;
+        border-radius: 14px;
+        padding: 15px;
+
+        cursor: pointer;
+
+        transition:
+            transform 0.25s ease,
+            box-shadow 0.25s ease,
+            border-color 0.25s ease;
+    }
+
+    .graph-zone:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(16, 43, 58, 0.09);
+        border-color: #16b89b;
+    }
+
+    .zone-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .zone-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 9px;
+
+        display: grid;
+        place-items: center;
+
+        font-size: 9px;
+        font-weight: 900;
+        color: white;
+    }
+
+    .zone-high {
+        background: #f47768;
+    }
+
+    .zone-moderate {
+        background: #f3b544;
+    }
+
+    .zone-low {
+        background: #19b78f;
+    }
+
+    .zone-risk-score {
+        font-size: 18px;
+        font-weight: 900;
+        color: #102b3a;
+    }
+
+    .graph-zone h4 {
+        margin-top: 13px;
+        font-size: 12px;
+        color: #18313d;
+    }
+
+    .graph-zone small {
+        display: block;
+        margin-top: 3px;
+        color: #71818a;
+        font-size: 8px;
+    }
+
+    .zone-mini-bar {
+        margin-top: 12px;
+        height: 5px;
+        background: #e9efed;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .zone-mini-fill {
+        height: 100%;
+        border-radius: 10px;
+    }
+
+
+    /* Responsive */
+    @media (max-width: 900px) {
+
+        .risk-visual-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .graphical-zones {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 600px) {
+
+        .visual-risk-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .graphical-zones {
+            grid-template-columns: 1fr;
+        }
+
+        .risk-donut {
+            width: 180px;
+            height: 180px;
+        }
+
+        .risk-donut::before {
+            width: 125px;
+            height: 125px;
+        }
+    }
+
+</style>
+
+<!-- ================= END GRAPHICAL RISK CSS ================= -->
+<style>
+/* ================= GEOguard LOGIN MODAL ================= */
+
+.login-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(10, 35, 45, 0.45);
+
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition: opacity .3s ease, visibility .3s ease;
+}
+
+.login-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.login-modal {
+    position: relative;
+
+    width: 450px;
+    max-width: 95%;
+
+    padding: 30px;
+
+    background: #ffffff;
+
+    border-radius: 24px;
+
+    box-shadow: 0 25px 80px rgba(0,0,0,.20);
+
+    transform: translateY(20px) scale(.96);
+
+    transition: transform .3s ease;
+}
+
+.login-overlay.show .login-modal {
+    transform: translateY(0) scale(1);
+}
+
+.login-close {
+    position: absolute;
+
+    top: 15px;
+    right: 15px;
+
+    width: 35px;
+    height: 35px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: #eef7f6;
+
+    color: #49636b;
+
+    cursor: pointer;
+
+    font-size: 16px;
+}
+
+.login-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    margin-bottom: 25px;
+}
+
+.login-logo {
+    width: 50px;
+    height: 50px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+
+    background: #078f88;
+
+    color: white;
+
+    font-size: 20px;
+}
+
+.login-header h2 {
+    margin: 0;
+
+    color: #173746;
+
+    font-size: 22px;
+}
+
+.login-header p {
+    margin: 4px 0 0;
+
+    color: #7b8c93;
+
+    font-size: 12px;
+}
+
+#roleSelection h3 {
+    margin: 0;
+
+    color: #173746;
+
+    font-size: 18px;
+}
+
+.login-subtitle {
+    margin: 5px 0 18px;
+
+    color: #819198;
+
+    font-size: 12px;
+}
+
+.role-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+
+.role-card {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns: 48px 1fr 20px;
+
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 14px;
+
+    border: 1px solid #e1eceb;
+
+    border-radius: 15px;
+
+    background: #ffffff;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition: .25s ease;
+}
+
+.role-card:hover {
+    transform: translateX(4px);
+
+    border-color: #75c9c2;
+
+    box-shadow: 0 8px 25px rgba(8,143,136,.10);
+}
+
+.role-icon {
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: #eaf7f6;
+
+    color: #078f88;
+
+    font-size: 18px;
+}
+
+.role-card strong {
+    display: block;
+
+    color: #173746;
+
+    font-size: 14px;
+}
+
+.role-card span {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #87969c;
+
+    font-size: 11px;
+}
+
+.role-card > i {
+    color: #a5b2b6;
+
+    font-size: 11px;
+}
+
+.back-role-btn {
+    border: none;
+
+    background: none;
+
+    color: #078f88;
+
+    cursor: pointer;
+
+    font-size: 12px;
+
+    margin-bottom: 18px;
+}
+
+.selected-role {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 12px;
+
+    margin-bottom: 20px;
+
+    border-radius: 14px;
+
+    background: #edf8f7;
+}
+
+.selected-role > div:first-child {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #078f88;
+
+    color: white;
+}
+
+.selected-role small {
+    display: block;
+
+    color: #789097;
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+.selected-role strong {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #173746;
+
+    font-size: 14px;
+}
+
+#loginForm label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #45606a;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+.input-wrapper {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    height: 45px;
+
+    padding: 0 13px;
+
+    margin-bottom: 15px;
+
+    border: 1px solid #dce8e7;
+
+    border-radius: 12px;
+
+    background: #ffffff;
+}
+
+.input-wrapper:focus-within {
+    border-color: #078f88;
+
+    box-shadow: 0 0 0 3px rgba(8,143,136,.08);
+}
+
+.input-wrapper i {
+    color: #79a8a3;
+
+    font-size: 13px;
+}
+
+.input-wrapper input,
+.input-wrapper select {
+    width: 100%;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    color: #173746;
+
+    font-size: 13px;
+}
+
+.login-submit {
+    width: 100%;
+
+    height: 46px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    background: #078f88;
+
+    color: white;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: .25s ease;
+}
+
+.login-submit:hover {
+    background: #067c76;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 8px 20px rgba(8,143,136,.20);
+}
+
+.login-error {
+    min-height: 17px;
+
+    margin-bottom: 5px;
+
+    color: #df6259;
+
+    font-size: 11px;
+}
+</style>
+</head>
+
+<body>
+    <!-- ================= ACCESS PORTAL ================= -->
+<div id="accessPortal" class="access-portal">
+
+    <div class="portal-bg">
+        <div class="terrain-line line-1"></div>
+        <div class="terrain-line line-2"></div>
+        <div class="terrain-line line-3"></div>
+        <div class="portal-orb orb-1"></div>
+        <div class="portal-orb orb-2"></div>
+    </div>
+
+    <div class="portal-content">
+
+        <div class="portal-brand">
+            <div class="portal-logo">
+                <!-- Apna original logo yahan laga sakte ho -->
+                ◈
+            </div>
+
+            <div>
+                <h1>GeoGuard <span>NER</span></h1>
+                <p>LANDSLIDE INTELLIGENCE PLATFORM</p>
+            </div>
+        </div>
+
+        <div class="portal-heading">
+            <span class="portal-kicker">
+                <i class="fa-solid fa-shield-halved"></i>
+                SECURE ACCESS PORTAL
+            </span>
+
+            <h2>Choose your access</h2>
+
+            <p>
+                Select your role to access the GeoGuard
+                landslide monitoring intelligence system.
+            </p>
+        </div>
+
+        <div class="role-grid">
+
+            <button class="role-card"
+                    onclick="openRoleLogin('government')">
+
+                <div class="role-icon">
+                    <i class="fa-solid fa-building-columns"></i>
+                </div>
+
+                <div class="role-info">
+                    <h3>Government</h3>
+                    <p>Regional command & complete intelligence access</p>
+                </div>
+
+                <i class="fa-solid fa-arrow-right role-arrow"></i>
+            </button>
+
+
+            <button class="role-card"
+                    onclick="openRoleLogin('station')">
+
+                <div class="role-icon">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                </div>
+
+                <div class="role-info">
+                    <h3>Station Head</h3>
+                    <p>Monitor stations and all subordinate zones</p>
+                </div>
+
+                <i class="fa-solid fa-arrow-right role-arrow"></i>
+            </button>
+
+
+            <button class="role-card"
+                    onclick="openRoleLogin('zonal')">
+
+                <div class="role-icon">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+
+                <div class="role-info">
+                    <h3>Zonal Head</h3>
+                    <p>Access intelligence for your assigned zone</p>
+                </div>
+
+                <i class="fa-solid fa-arrow-right role-arrow"></i>
+            </button>
+
+
+            <button class="role-card public-role"
+                    onclick="openPublicAccess()">
+
+                <div class="role-icon">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+
+                <div class="role-info">
+                    <h3>Public</h3>
+                    <p>View landslide risk information for your area</p>
+                </div>
+
+                <i class="fa-solid fa-arrow-right role-arrow"></i>
+            </button>
+
+        </div>
+
+        <div class="portal-footer">
+            <span>
+                <i class="fa-solid fa-circle"></i>
+                SYSTEM ONLINE
+            </span>
+
+            <span>GEO GUARD NER • SECURE NETWORK</span>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ================= ROLE LOGIN MODAL ================= -->
+<div id="roleLoginModal" class="role-login-modal">
+
+    <div class="login-backdrop"
+         onclick="closeRoleLogin()"></div>
+
+    <div class="login-card">
+
+        <button class="login-close"
+                onclick="closeRoleLogin()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="login-card-icon">
+            <i id="roleLoginIcon"
+               class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <span id="roleLoginLabel"
+              class="login-label">
+            SECURE ACCESS
+        </span>
+
+        <h2 id="roleLoginTitle">
+            Government Login
+        </h2>
+
+        <p id="roleLoginDescription">
+            Enter your authorized credentials.
+        </p>
+
+        <form onsubmit="handlePortalLogin(event)">
+
+            <div class="input-group">
+                <label>USERNAME</label>
+
+                <div class="input-box">
+                    <i class="fa-solid fa-user"></i>
+
+                    <input
+                        id="portalUsername"
+                        type="text"
+                        placeholder="Enter username"
+                        autocomplete="username"
+                    >
+                </div>
+            </div>
+
+
+            <div class="input-group">
+                <label>PASSWORD</label>
+
+                <div class="input-box">
+                    <i class="fa-solid fa-lock"></i>
+
+                    <input
+                        id="portalPassword"
+                        type="password"
+                        placeholder="Enter password"
+                        autocomplete="current-password"
+                    >
+                </div>
+            </div>
+
+            <p id="portalLoginError"
+               class="portal-login-error"></p>
+
+            <button type="submit"
+                    class="portal-login-button">
+
+                <span>ENTER DASHBOARD</span>
+
+                <i class="fa-solid fa-arrow-right"></i>
+
+            </button>
+
+        </form>
+
+        <button class="back-role-button"
+                onclick="closeRoleLogin()">
+
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to access selection
+
+        </button>
+
+    </div>
+</div>
+
+
+<!-- ================= PUBLIC ACCESS MODAL ================= -->
+<div id="publicAccessModal"
+     class="role-login-modal">
+
+    <div class="login-backdrop"
+         onclick="closePublicAccess()"></div>
+
+    <div class="login-card public-login-card">
+
+        <button class="login-close"
+                onclick="closePublicAccess()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="login-card-icon public-icon">
+            <i class="fa-solid fa-location-crosshairs"></i>
+        </div>
+
+        <span class="login-label">
+            PUBLIC ACCESS
+        </span>
+
+        <h2>Local Risk Intelligence</h2>
+
+        <p>
+            Enter your Gmail and allow location access
+            to view risk information for your current area.
+        </p>
+
+        <div class="input-group">
+
+            <label>GMAIL ID</label>
+
+            <div class="input-box">
+                <i class="fa-solid fa-envelope"></i>
+
+                <input
+                    id="publicGmail"
+                    type="email"
+                    placeholder="yourname@gmail.com"
+                >
+            </div>
+
+        </div>
+
+
+        <div class="location-permission">
+
+            <div class="location-icon">
+                <i class="fa-solid fa-location-dot"></i>
+            </div>
+
+            <div>
+                <strong>Current Location</strong>
+                <small id="locationStatus">
+                    Location access is required
+                </small>
+            </div>
+
+            <button id="locationButton"
+                    onclick="requestPublicLocation()">
+
+                Allow
+
+            </button>
+
+        </div>
+
+
+        <p id="publicLoginError"
+           class="portal-login-error"></p>
+
+
+        <button class="portal-login-button"
+                onclick="continuePublicAccess()">
+
+            <span>CONTINUE TO LOCAL DATA</span>
+
+            <i class="fa-solid fa-arrow-right"></i>
+
+        </button>
+
+
+        <button class="back-role-button"
+                onclick="closePublicAccess()">
+
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to access selection
+
+        </button>
+
+    </div>
+</div>
+
+<!-- ================= NAVBAR ================= -->
+
+
+<header class="navbar">
+
+    <div class="nav-container">
+
+        <!-- LOGO -->
+        <a href="#home" class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <div class="brand-text">
+                <strong>GeoGuard</strong>
+                <span>NER</span>
+            </div>
+
+        </a>
+
+
+        <!-- NAVIGATION -->
+        <nav class="nav-links">
+
+            <a href="#home" class="active">
+                Home
+            </a>
+
+            <a href="#monitoring">
+                Risk Monitoring
+            </a>
+
+            <a href="#how-it-works">
+                How It Works
+            </a>
+
+            <a href="#about">
+                About
+            </a>
+
+        </nav>
+
+
+        <!-- NAV RIGHT -->
+        <div class="nav-actions">
+
+            <div class="nav-search">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="text"
+                    id="navLocationSearch"
+                    placeholder="Search location..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <a href="#alerts" class="live-alert">
+
+                <span class="live-dot"></span>
+
+                Live Alerts
+
+            </a>
+            <button class="role-login-btn" onclick="openLogin()">
+    <i class="fa-solid fa-lock"></i>
+    Login
+</button>
+
+
+            <button
+                class="mobile-menu"
+                id="mobileMenu">
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</header>
+<!-- TOP LOCATION SEARCH -->
+
+
+        <!-- HERO VISUAL -->
+
+       <section class="hero" id="home">
+
+    <div class="hero-bg-orb orb-one"></div>
+    <div class="hero-bg-orb orb-two"></div>
+
+
+    <div class="hero-container">
+
+        <!-- LEFT SIDE -->
+
+        <div class="hero-content">
+
+            <div class="hero-status">
+
+                <span class="status-pulse"></span>
+
+                REGIONAL MONITORING SYSTEM ACTIVE
+
+            </div>
+
+
+            <h1>
+
+                Predict.
+                <span>Protect.</span>
+                Prevent.
+
+            </h1>
+
+
+            <p class="hero-description">
+
+                AI-powered landslide risk monitoring for
+                India's North Eastern Region — helping
+                communities detect danger before disaster strikes.
+
+            </p>
+
+
+            <div class="hero-buttons">
+
+                <a>
+                    href="#monitoring"
+                    class="btn-primary">
+
+                    <i class="fa-solid fa-map-location-dot"></i>
+
+                    Explore Risk Map
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </a>
+
+
+                <a
+                    href="#how-it-works"
+                    class="btn-secondary">
+
+                    How It Works
+
+                </a>
+
+            </div>
+
+
+            <!-- TRUST STATS -->
+
+            <div class="hero-stats">
+
+                <div class="hero-stat">
+
+                    <strong>24/7</strong>
+
+                    <span>Monitoring</span>
+
+                </div>
+
+
+                <div class="hero-stat">
+
+                    <strong>8+</strong>
+
+                    <span>States Covered</span>
+
+                </div>
+
+
+                <div class="hero-stat">
+
+                    <strong>AI</strong>
+
+                    <span>Risk Analysis</span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RIGHT SIDE -->
+
+        <div class="hero-visual">
+
+            <div class="risk-preview">
+
+                <div class="preview-header">
+
+                    <div>
+
+                        <span class="preview-label">
+                            LIVE REGIONAL RISK
+                        </span>
+
+                        <h3>
+                            North Eastern Region
+                        </h3>
+
+                    </div>
+
+
+                    <span class="live-badge">
+
+                        <span></span>
+
+                        LIVE
+
+                    </span>
+
+                </div>
+
+
+                <!-- RISK MAP -->
+
+                <div class="risk-map">
+
+                    <div class="map-glow"></div>
+
+                    <div class="map-grid"></div>
+
+
+                    <div class="map-point point-one">
+                        <span></span>
+                    </div>
+
+                    <div class="map-point point-two">
+                        <span></span>
+                    </div>
+
+                    <div class="map-point point-three">
+                        <span></span>
+                    </div>
+
+                    <div class="map-point point-four">
+                        <span></span>
+                    </div>
+
+
+                    <div class="map-label label-one">
+                        Assam
+                    </div>
+
+                    <div class="map-label label-two">
+                        Meghalaya
+                    </div>
+
+                    <div class="map-label label-three">
+                        Mizoram
+                    </div>
+
+                </div>
+
+
+                <!-- RISK ROWS -->
+
+                <div class="risk-list">
+
+                    <div class="risk-row">
+
+                        <div class="risk-location">
+
+                            <span class="risk-icon high">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </span>
+
+                            <div>
+                                <strong>Assam</strong>
+                                <small>High risk zones</small>
+                            </div>
+
+                        </div>
+
+                        <strong class="risk-value high-text">
+                            68%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="risk-row">
+
+                        <div class="risk-location">
+
+                            <span class="risk-icon moderate">
+                                <i class="fa-solid fa-mountain"></i>
+                            </span>
+
+                            <div>
+                                <strong>Meghalaya</strong>
+                                <small>Moderate risk</small>
+                            </div>
+
+                        </div>
+
+                        <strong class="risk-value moderate-text">
+                            52%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="risk-row">
+
+                        <div class="risk-location">
+
+                            <span class="risk-icon low">
+                                <i class="fa-solid fa-leaf"></i>
+                            </span>
+
+                            <div>
+                                <strong>Mizoram</strong>
+                                <small>Low risk</small>
+                            </div>
+
+                        </div>
+
+                        <strong class="risk-value low-text">
+                            34%
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="preview-footer">
+
+                    <span>
+                        <i class="fa-solid fa-clock"></i>
+                        Updated 2 min ago
+                    </span>
+
+                    <span>
+                        <i class="fa-solid fa-location-dot"></i>
+                        127 monitored zones
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SCROLL INDICATOR -->
+
+    <div class="scroll-indicator">
+
+        <span>SCROLL TO EXPLORE</span>
+
+        <i class="fa-solid fa-chevron-down"></i>
+
+    </div>
+
+</section>
+                   
+<!-- ================= MONITORING SECTION ================= -->
+
+<section class="monitoring" id="monitoring">
+
+    <div class="section-container">
+
+        <div class="section-heading">
+
+            <span class="eyebrow">
+                REAL-TIME INTELLIGENCE
+            </span>
+
+            <h2>
+                Landslide Risk
+                <span>Monitoring</span>
+            </h2>
+
+            <p>
+                GeoGuard combines terrain information, environmental
+                conditions and intelligent risk analysis to identify
+                potentially dangerous areas before disaster strikes.
+            </p>
+
+        </div>
+
+
+        <div class="monitor-grid">
+
+            <div class="info-card">
+
+                <div class="icon-box">
+                    <i class="fa-solid fa-mountain-sun"></i>
+                </div>
+
+                <h3>Terrain Analysis</h3>
+
+                <p>
+                    Analyse terrain characteristics and identify
+                    vulnerable slopes across the region.
+                </p>
+
+                <a href="#">
+                    Explore Data
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <div class="icon-box">
+                    <i class="fa-solid fa-cloud-rain"></i>
+                </div>
+
+                <h3>Rainfall Monitoring</h3>
+
+                <p>
+
+                    Track rainfall conditions and detect patterns
+                    associated with landslide risk.
+                </p>
+
+                <a href="#" onclick="showRainfallConditions(); return false;">
+    View Conditions
+    <i class="fa-solid fa-arrow-right"></i>
+</a>
+            </div>
+
+
+            <div class="info-card">
+
+                <div class="icon-box">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+
+                <h3>AI Risk Prediction</h3>
+
+                <p>
+                    Intelligent models combine multiple factors
+                    to estimate potential landslide risk.
+                </p>
+
+                <a href="#">
+                    See Prediction
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <div class="icon-box">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+
+                <h3>Early Warnings</h3>
+
+                <p>
+                    Receive timely alerts when monitored locations
+                    show increasing risk conditions.
+                </p>
+
+                <a href="#alerts">
+                    View Alerts
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+  
+<!-- ================= LIVE RISK DASHBOARD ================= -->
+
+<div class="live-dashboard">
+
+    <!-- DASHBOARD HEADER -->
+    <div class="dashboard-heading">
+
+    <div class="dashboard-title">
+
+        <div class="dashboard-icon">
+            <i class="fa-solid fa-chart-line"></i>
+        </div>
+
+        <div>
+            <div class="dashboard-label">
+                LIVE RISK INTELLIGENCE
+            </div>
+
+            <h3>Regional Risk Dashboard</h3>
+
+            <p>
+                Monitor landslide risk across states and vulnerable areas
+                in the North Eastern Region.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="dashboard-live">
+        <span class="live-dot"></span>
+        <span>LIVE MONITORING</span>
+    </div>
+
+</div>
+    <!-- SEARCH & FILTER -->
+    <div class="risk-search-panel">
+
+        <!-- SEARCH -->
+        <div class="search-main">
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+                type="text"
+                id="riskSearchInput"
+                placeholder="Search state or area..."
+                autocomplete="off"
+            >
+        </div>
+
+        <!-- STATE -->
+        <div class="search-filter">
+            <label>STATE</label>
+
+            <select id="stateFilter">
+                <option value="">All States</option>
+                <option value="Assam">Assam</option>
+                <option value="Meghalaya">Meghalaya</option>
+                <option value="Mizoram">Mizoram</option>
+                <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+            </select>
+        </div>
+
+        <!-- RISK LEVEL -->
+        <div class="search-filter">
+            <label>RISK LEVEL</label>
+
+            <select id="riskFilter">
+                <option value="">All Levels</option>
+                <option value="LOW">Low</option>
+                <option value="MODERATE">Moderate</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+            </select>
+        </div>
+
+        <!-- SEARCH BUTTON -->
+        <button
+            class="search-button"
+            type="button"
+            onclick="filterRiskDashboard()">
+
+            <i class="fa-solid fa-filter"></i>
+            Filter
+        </button>
+
+    </div>
+
+    <!-- QUICK LOCATIONS -->
+    <div class="location-tags">
+
+        <span class="tag-title">Quick locations:</span>
+
+        <button onclick="selectGraphZone('Dima Hasao', '68', 'HIGH')">
+            Dima Hasao
+        </button>
+
+        <button onclick="selectGraphZone('Karbi Anglong', '54', 'MODERATE')">
+            Karbi Anglong
+        </button>
+
+        <button onclick="selectGraphZone('East Khasi Hills', '72', 'HIGH')">
+            East Khasi Hills
+        </button>
+
+        <button onclick="selectGraphZone('Aizawl', '46', 'MODERATE')">
+            Aizawl
+        </button>
+
+    </div>
+
+    <!-- MAIN RISK AREA -->
+    <div class="dashboard-main-grid">
+
+        <!-- CURRENT RISK -->
+        <div class="risk-main-card">
+
+            <div class="risk-card-top">
+
+                <div>
+                    <span>SELECTED LOCATION</span>
+
+                    <h3 id="selectedArea">
+                        Dima Hasao
+                    </h3>
+                </div>
+
+                <span
+                    class="risk-badge high"
+                    id="riskStatus">
+                    HIGH
+                </span>
+
+            </div>
+
+            <div class="risk-percentage">
+
+                <strong id="riskPercentage">
+                    68
+                </strong>
+
+                <span>% Risk</span>
+
+            </div>
+
+            <div class="risk-progress">
+
+                <div
+                    id="riskProgressBar"
+                    style="width:68%;">
+                </div>
+
+            </div>
+
+            <p id="riskMessage">
+                Elevated landslide probability detected.
+                Increased monitoring is recommended.
+            </p>
+
+        </div>
+
+        <!-- ENVIRONMENT -->
+        <div class="environment-card">
+
+            <div class="environment-item">
+
+                <span>🌧️</span>
+
+                <div>
+                    <small>Rainfall</small>
+                    <strong id="rainfallValue">84 mm</strong>
+                </div>
+
+            </div>
+
+            <div class="environment-item">
+
+                <span>💧</span>
+
+                <div>
+                    <small>Soil Moisture</small>
+                    <strong id="soilValue">71%</strong>
+                </div>
+
+            </div>
+
+            <div class="environment-item">
+
+                <span>⛰️</span>
+
+                <div>
+                    <small>Slope</small>
+                    <strong id="slopeValue">38°</strong>
+                </div>
+
+            </div>
+
+            <div class="environment-item">
+
+                <span>🌡️</span>
+
+                <div>
+                    <small>Temperature</small>
+                    <strong id="temperatureValue">24°C</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- GRAPHICAL RISK OVERVIEW -->
+
+    <div class="visual-risk-panel">
+
+        <div class="visual-risk-header">
+
+            <div>
+
+                <span class="eyebrow">
+                    GRAPHICAL RISK ANALYSIS
+                </span>
+
+                <h3>
+                    Regional Vulnerability Overview
+                </h3>
+
+                <p>
+                    Visual representation of current landslide
+                    risk distribution across monitored areas.
+                </p>
+
+            </div>
+
+            <div class="visual-live">
+
+                <span class="visual-live-dot"></span>
+
+                LIVE DATA
+
+            </div>
+
+        </div>
+
+        <!-- DONUT + DISTRIBUTION -->
+
+        <div class="risk-visual-grid">
+
+            <div class="risk-donut-wrapper">
+
+                <div class="risk-donut">
+
+                    <div class="donut-center">
+
+                        <strong>38</strong>
+
+                        <span>
+                            OVERALL RISK
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="risk-distribution">
+
+                <div class="distribution-item">
+
+                    <div class="distribution-top">
+
+                        <div class="distribution-name">
+
+                            <span
+                                class="distribution-dot"
+                                style="background:#19b78f;">
+                            </span>
+
+                            Low Risk
+
+                        </div>
+
+                        <span class="distribution-percent">
+                            62%
+                        </span>
+
+                    </div>
+
+                    <div class="distribution-bar">
+
+                        <div class="distribution-fill fill-low"></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="distribution-item">
+
+                    <div class="distribution-top">
+
+                        <div class="distribution-name">
+
+                            <span
+                                class="distribution-dot"
+                                style="background:#f3b544;">
+                            </span>
+
+                            Moderate Risk
+
+                        </div>
+
+                        <span class="distribution-percent">
+                            24%
+                        </span>
+
+                    </div>
+
+                    <div class="distribution-bar">
+
+                        <div class="distribution-fill fill-moderate"></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="distribution-item">
+
+                    <div class="distribution-top">
+
+                        <div class="distribution-name">
+
+                            <span
+                                class="distribution-dot"
+                                style="background:#f47768;">
+                            </span>
+
+                            High Risk
+
+                        </div>
+
+                        <span class="distribution-percent">
+                            10%
+                        </span>
+
+                    </div>
+
+                    <div class="distribution-bar">
+
+                        <div class="distribution-fill fill-high"></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="distribution-item">
+
+                    <div class="distribution-top">
+
+                        <div class="distribution-name">
+
+                            <span
+                                class="distribution-dot"
+                                style="background:#d9415b;">
+                            </span>
+
+                            Critical Risk
+
+                        </div>
+
+                        <span class="distribution-percent">
+                            4%
+                        </span>
+
+                    </div>
+
+                    <div class="distribution-bar">
+
+                        <div class="distribution-fill fill-critical"></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- VULNERABLE LOCATIONS -->
+
+        <div class="graphical-zones">
+
+            <div
+                class="graph-zone"
+                onclick="selectGraphZone('Dima Hasao','68','HIGH')">
+
+                <div class="zone-top">
+
+                    <div class="zone-number zone-high">
+                        01
+                    </div>
+
+                    <div class="zone-risk-score">
+                        68%
+                    </div>
+
+                </div>
+
+                <h4>Dima Hasao</h4>
+
+                <small>Assam</small>
+
+                <div class="zone-mini-bar">
+
+                    <div
+                        class="zone-mini-fill"
+                        style="width:68%; background:#f47768;">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="graph-zone"
+                onclick="selectGraphZone('Karbi Anglong','54','MODERATE')">
+
+                <div class="zone-top">
+
+                    <div class="zone-number zone-moderate">
+                        02
+                    </div>
+
+                    <div class="zone-risk-score">
+                        54%
+                    </div>
+
+                </div>
+
+                <h4>Karbi Anglong</h4>
+
+                <small>Assam</small>
+
+                <div class="zone-mini-bar">
+
+                    <div
+                        class="zone-mini-fill"
+                        style="width:54%; background:#f3b544;">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="graph-zone"
+                onclick="selectGraphZone('East Khasi Hills','72','HIGH')">
+
+                <div class="zone-top">
+
+                    <div class="zone-number zone-high">
+                        03
+                    </div>
+
+                    <div class="zone-risk-score">
+                        72%
+                    </div>
+
+                </div>
+
+                <h4>East Khasi Hills</h4>
+
+                <small>Meghalaya</small>
+
+                <div class="zone-mini-bar">
+
+                    <div
+                        class="zone-mini-fill"
+                        style="width:72%; background:#f47768;">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="graph-zone"
+                onclick="selectGraphZone('Aizawl','46','MODERATE')">
+
+                <div class="zone-top">
+
+                    <div class="zone-number zone-moderate">
+                        04
+                    </div>
+
+                    <div class="zone-risk-score">
+                        46%
+                    </div>
+
+                </div>
+
+                <h4>Aizawl</h4>
+
+                <small>Mizoram</small>
+
+                <div class="zone-mini-bar">
+
+                    <div
+                        class="zone-mini-fill"
+                        style="width:46%; background:#f3b544;">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</section>
+
+<!-- ================= END LIVE RISK DASHBOARD ================= -->
+
+
+
+
+<!-- ================= HOW IT WORKS ================= -->
+
+<section class="process" id="process">
+
+    <div class="section-container">
+
+        <div class="section-heading center">
+
+            <span class="eyebrow">
+                HOW IT WORKS
+            </span>
+
+            <h2>
+                From Data to
+                <span>Early Warning</span>
+            </h2>
+
+            <p>
+                GeoGuard transforms environmental and terrain data
+                into actionable landslide risk information.
+            </p>
+
+        </div>
+
+
+        <div class="process-grid">
+
+            <div class="process-card">
+
+                <div class="number">01</div>
+
+                <i class="fa-solid fa-satellite"></i>
+
+                <h3>Collect</h3>
+
+                <p>
+                    Gather terrain, rainfall, geological and
+                    environmental information.
+                </p>
+
+            </div>
+
+
+            <div class="process-arrow">
+                <i class="fa-solid fa-arrow-right"></i>
+            </div>
+
+
+            <div class="process-card">
+
+                <div class="number">02</div>
+
+                <i class="fa-solid fa-microchip"></i>
+
+                <h3>Analyse</h3>
+
+                <p>
+                    Process multiple risk factors using intelligent
+                    analytical models.
+                </p>
+
+            </div>
+
+
+            <div class="process-arrow">
+                <i class="fa-solid fa-arrow-right"></i>
+            </div>
+
+
+            <div class="process-card">
+
+                <div class="number">03</div>
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <h3>Alert</h3>
+
+                <p>
+                    Generate risk notifications to support faster
+                    preparedness and response.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= LIVE ALERT ================= -->
+
+<section class="alerts-section" id="alerts">
+
+    <div class="section-container">
+
+        <div class="alert-box">
+
+            <div class="alert-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <div class="alert-content">
+
+                <span>GEO GUARD ALERT NETWORK</span>
+
+                <h2>
+                    Stay informed. Stay prepared.
+                </h2>
+
+                <p>
+                    Monitor changing landslide conditions and access
+                    risk information for vulnerable locations.
+                </p>
+
+            </div>
+
+            <button class="alert-button" id="alertButton">
+                Check Alerts
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= ABOUT ================= -->
+
+<section class="about" id="about">
+
+    <div class="section-container about-grid">
+
+        <div>
+
+            <span class="eyebrow">
+                ABOUT GEOGUARD NER
+            </span>
+
+            <h2>
+                Technology for a
+                <span>safer Northeast</span>
+            </h2>
+
+        </div>
+
+        <div>
+
+            <p>
+                GeoGuard NER is an AI-driven landslide early warning
+                concept developed to support disaster preparedness
+                across India's North Eastern Region.
+            </p>
+
+            <p>
+                By bringing together geospatial information,
+                environmental observations and predictive analytics,
+                the platform aims to help communities and authorities
+                make informed decisions before hazardous events occur.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= FOOTER ================= -->
+
+<footer>
+
+    <div class="footer-container">
+
+        <div class="footer-brand">
+
+            <img src="logo.png" alt="GeoGuard Logo" class="logo">
+            <div>
+                <strong>GeoGuard NER</strong>
+                <span>Landslide Early Warning System</span>
+            </div>
+
+        </div>
+
+        <p>
+            SIH PS 26001 • Intelligent Disaster Risk Monitoring
+        </p>
+
+    </div>
+
+</footer>
+
+
+<!-- JavaScript -->
+<script src="script.js"></script>
+<!-- ================= END GRAPHICAL RISK JAVASCRIPT ================= -->
+<!-- ================= LOGIN POPUP ================= -->
+
+<!-- =========================================================
+     GOVERNMENT COMMAND CENTER
+     ========================================================= -->
+
+<div id="governmentDashboard" class="gov-dashboard" style="display:none;">
+
+    <!-- TOP NAVIGATION -->
+    <header class="gov-topbar">
+
+        <div class="gov-brand">
+
+            <img src="logo.png" alt="GeoGuard NER">
+
+            <div class="gov-brand-text">
+                <strong>GeoGuard NER</strong>
+                <span>GOVERNMENT COMMAND CENTER</span>
+            </div>
+
+        </div>
+
+
+        <div class="gov-title">
+
+            <span class="live-dot"></span>
+
+            <span>
+                LIVE REGIONAL MONITORING
+            </span>
+
+        </div>
+
+
+        <div class="gov-user">
+
+            <div class="gov-user-info">
+
+                <strong>Government Administrator</strong>
+
+                <span>FULL SYSTEM ACCESS</span>
+
+            </div>
+
+            <div class="gov-avatar">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+
+            <button
+                class="gov-logout"
+                onclick="closeGovernmentDashboard()">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Exit
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main class="gov-content">
+
+
+        <section class="gov-welcome gov-animate">
+
+            <small>
+                NATIONAL DISASTER RISK COMMAND CENTER
+            </small>
+
+            <h1>
+                Northeast India Risk Overview
+            </h1>
+
+            <p>
+                Monitor headquarters, zones, vulnerable areas and
+                real-time landslide risk across the North Eastern Region.
+            </p>
+
+        </section>
+
+
+        <!-- STATISTICS -->
+
+        <section class="gov-stats">
+
+            <div class="gov-stat gov-animate">
+
+                <div class="gov-stat-icon">
+                    <i class="fa-solid fa-map"></i>
+                </div>
+
+                <strong>8</strong>
+
+                <span>
+                    STATES COVERED
+                </span>
+
+            </div>
+
+
+            <div class="gov-stat gov-animate">
+
+                <div class="gov-stat-icon">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                </div>
+
+                <strong>12</strong>
+
+                <span>
+                    MONITORING HQs
+                </span>
+
+            </div>
+
+
+            <div class="gov-stat gov-animate">
+
+                <div class="gov-stat-icon">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+
+                <strong>48</strong>
+
+                <span>
+                    ACTIVE ZONES
+                </span>
+
+            </div>
+
+
+            <div class="gov-stat alert-stat gov-animate">
+
+                <div class="gov-stat-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+
+                <strong>17</strong>
+
+                <span>
+                    ACTIVE ALERTS
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- MAP + RISK -->
+
+        <section class="gov-main-grid">
+
+
+            <!-- MAP -->
+
+            <div class="gov-panel gov-animate">
+
+                <div class="gov-panel-head">
+
+                    <h3>
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        Regional Risk Map
+                    </h3>
+
+                    <span>
+                        ● LIVE
+                    </span>
+
+                </div>
+
+
+                <div class="gov-map">
+
+                    <div class="gov-map-shape"></div>
+
+
+                    <div class="gov-map-label assam">
+                        ASSAM
+                    </div>
+
+                    <div class="gov-map-label meghalaya">
+                        MEGHALAYA
+                    </div>
+
+                    <div class="gov-map-label mizoram">
+                        MIZORAM
+                    </div>
+
+                    <div class="gov-map-label arunachal">
+                        ARUNACHAL
+                    </div>
+
+
+                    <div class="gov-risk-point p1"
+                         title="Assam - High Risk">
+                    </div>
+
+                    <div class="gov-risk-point p2"
+                         title="Meghalaya - Moderate Risk">
+                    </div>
+
+                    <div class="gov-risk-point p3"
+                         title="Mizoram - Low Risk">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RISK SUMMARY -->
+
+            <div class="gov-panel gov-animate">
+
+                <div class="gov-panel-head">
+
+                    <h3>
+                        Regional Risk
+                    </h3>
+
+                    <span>
+                        UPDATED 2 MIN AGO
+                    </span>
+
+                </div>
+
+
+                <div class="gov-risk-body">
+
+
+                    <div class="gov-risk-summary">
+
+                        <div class="gov-risk-ring">
+
+                            <div>
+
+                                <strong>68%</strong>
+
+                                <span>
+                                    AVG RISK
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div>
+
+                            <h4>
+                                Elevated Risk
+                            </h4>
+
+                            <span class="gov-critical">
+                                HIGH ATTENTION
+                            </span>
+
+                            <p style="
+                                font-size:11px;
+                                color:#819198;
+                                line-height:1.6;
+                                margin-top:9px;
+                            ">
+                                Multiple vulnerable areas require
+                                continuous monitoring.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="gov-risk-list">
+
+                        <div class="gov-risk-row">
+
+                            <label>Critical</label>
+
+                            <div class="gov-risk-bar">
+                                <div class="gov-risk-fill red"></div>
+                            </div>
+
+                            <strong>06</strong>
+
+                        </div>
+
+
+                        <div class="gov-risk-row">
+
+                            <label>High</label>
+
+                            <div class="gov-risk-bar">
+                                <div class="gov-risk-fill orange"></div>
+                            </div>
+
+                            <strong>11</strong>
+
+                        </div>
+
+
+                        <div class="gov-risk-row">
+
+                            <label>Moderate</label>
+
+                            <div class="gov-risk-bar">
+                                <div class="gov-risk-fill yellow"></div>
+                            </div>
+
+                            <strong>19</strong>
+
+                        </div>
+
+
+                        <div class="gov-risk-row">
+
+                            <label>Low</label>
+
+                            <div class="gov-risk-bar">
+                                <div class="gov-risk-fill green"></div>
+                            </div>
+
+                            <strong>12</strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- BOTTOM -->
+
+        <section class="gov-bottom">
+
+
+            <!-- TOP RISK AREAS -->
+
+            <div class="gov-panel gov-animate">
+
+                <div class="gov-panel-head">
+
+                    <h3>
+                        <i class="fa-solid fa-chart-line"></i>
+                        Highest Risk Areas
+                    </h3>
+
+                    <span>
+                        PRIORITY LOCATIONS
+                    </span>
+
+                </div>
+
+
+                <div style="overflow-x:auto;">
+
+                    <table class="gov-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>AREA</th>
+                                <th>STATE</th>
+                                <th>RISK</th>
+                                <th>STATUS</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            <tr>
+
+                                <td class="gov-area">
+                                    Dima Hasao
+                                </td>
+
+                                <td class="gov-state">
+                                    Assam
+                                </td>
+
+                                <td class="gov-score">
+                                    82%
+                                </td>
+
+                                <td>
+                                    <span class="gov-badge critical">
+                                        CRITICAL
+                                    </span>
+                                </td>
+
+                            </tr>
+
+
+                            <tr>
+
+                                <td class="gov-area">
+                                    East Khasi Hills
+                                </td>
+
+                                <td class="gov-state">
+                                    Meghalaya
+                                </td>
+
+                                <td class="gov-score">
+                                    72%
+                                </td>
+
+                                <td>
+                                    <span class="gov-badge high">
+                                        HIGH
+                                    </span>
+                                </td>
+
+                            </tr>
+
+
+                            <tr>
+
+                                <td class="gov-area">
+                                    Karbi Anglong
+                                </td>
+
+                                <td class="gov-state">
+                                    Assam
+                                </td>
+
+                                <td class="gov-score">
+                                    54%
+                                </td>
+
+                                <td>
+                                    <span class="gov-badge moderate">
+                                        MODERATE
+                                    </span>
+                                </td>
+
+                            </tr>
+
+
+                            <tr>
+
+                                <td class="gov-area">
+                                    Aizawl
+                                </td>
+
+                                <td class="gov-state">
+                                    Mizoram
+                                </td>
+
+                                <td class="gov-score">
+                                    46%
+                                </td>
+
+                                <td>
+                                    <span class="gov-badge moderate">
+                                        MODERATE
+                                    </span>
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- ALERTS -->
+
+            <div class="gov-panel gov-animate">
+
+                <div class="gov-panel-head">
+
+                    <h3>
+                        <i class="fa-solid fa-bell"></i>
+                        Live Alerts
+                    </h3>
+
+                    <span>
+                        17 ACTIVE
+                    </span>
+
+                </div>
+
+
+                <div class="gov-alerts">
+
+
+                    <div class="gov-alert high">
+
+                        <strong>
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            High Risk — Dima Hasao
+                        </strong>
+
+                        <span>
+                            Increased rainfall and slope instability detected.
+                        </span>
+
+                    </div>
+
+
+                    <div class="gov-alert high">
+
+                        <strong>
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            High Risk — East Khasi Hills
+                        </strong>
+
+                        <span>
+                            Terrain instability requires enhanced monitoring.
+                        </span>
+
+                    </div>
+
+
+                    <div class="gov-alert medium">
+
+                        <strong>
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            Moderate Risk — Aizawl
+                        </strong>
+
+                        <span>
+                            Environmental conditions are being monitored.
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+<!-- ================= STATION HEAD DASHBOARD ================= -->
+
+<div id="stationDashboard" class="role-dashboard">
+
+    <div class="dashboard-topbar">
+
+        <div class="dashboard-logo">
+            <span class="logo-icon">◈</span>
+
+            <div>
+                <strong>GeoGuard NER</strong>
+                <small>STATION COMMAND CENTER</small>
+            </div>
+        </div>
+
+        <div class="dashboard-live">
+            <span></span> LIVE MONITORING
+        </div>
+
+        <div class="dashboard-user">
+            <div>
+                <strong>Station Head</strong>
+                <small>HEADQUARTERS</small>
+            </div>
+
+            <button onclick="closeStationDashboard()">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Exit
+            </button>
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-content">
+
+        <div class="dashboard-heading">
+
+            <div>
+                <span>HEADQUARTERS MONITORING</span>
+
+                <h1>Station Command Center</h1>
+
+                <p>
+                    Monitor all zones and vulnerable areas
+                    under your headquarters.
+                </p>
+            </div>
+
+            <div class="dashboard-date">
+                <i class="fa-regular fa-clock"></i>
+                SYSTEM ONLINE
+            </div>
+
+        </div>
+
+
+        <!-- STAT CARDS -->
+
+        <div class="dashboard-stats">
+
+            <div class="risk-card">
+                <div class="card-icon">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+
+                <strong>04</strong>
+
+                <span>ACTIVE ZONES</span>
+            </div>
+
+
+            <div class="risk-card">
+                <div class="card-icon">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+
+                <strong>16</strong>
+
+                <span>MONITORED AREAS</span>
+            </div>
+
+
+            <div class="risk-card warning-card">
+                <div class="card-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+
+                <strong>06</strong>
+
+                <span>HIGH RISK AREAS</span>
+            </div>
+
+
+            <div class="risk-card danger-card">
+                <div class="card-icon">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+
+                <strong>03</strong>
+
+                <span>ACTIVE ALERTS</span>
+            </div>
+
+        </div>
+
+
+        <!-- ZONES -->
+
+        <div class="dashboard-section">
+
+            <div class="section-title">
+
+                <div>
+                    <i class="fa-solid fa-map-location-dot"></i>
+
+                    <div>
+                        <h2>Zones Under Headquarters</h2>
+                        <p>Live risk status of all zones</p>
+                    </div>
+                </div>
+
+                <span>04 ZONES</span>
+
+            </div>
+
+
+            <div class="zone-grid">
+
+                <div class="zone-card critical-zone">
+
+                    <div class="zone-top">
+                        <span class="zone-status">CRITICAL</span>
+                        <strong>82%</strong>
+                    </div>
+
+                    <h3>Mahur Zone</h3>
+
+                    <p>
+                        6 monitored areas
+                    </p>
+
+                    <div class="zone-bar">
+                        <div style="width:82%"></div>
+                    </div>
+
+                </div>
+
+
+                <div class="zone-card high-zone">
+
+                    <div class="zone-top">
+                        <span class="zone-status">HIGH</span>
+                        <strong>61%</strong>
+                    </div>
+
+                    <h3>Jatinga Zone</h3>
+
+                    <p>
+                        4 monitored areas
+                    </p>
+
+                    <div class="zone-bar">
+                        <div style="width:61%"></div>
+                    </div>
+
+                </div>
+
+
+                <div class="zone-card moderate-zone">
+
+                    <div class="zone-top">
+                        <span class="zone-status">MODERATE</span>
+                        <strong>48%</strong>
+                    </div>
+
+                    <h3>Diyungbra Zone</h3>
+
+                    <p>
+                        3 monitored areas
+                    </p>
+
+                    <div class="zone-bar">
+                        <div style="width:48%"></div>
+                    </div>
+
+                </div>
+
+
+                <div class="zone-card low-zone">
+
+                    <div class="zone-top">
+                        <span class="zone-status">LOW</span>
+                        <strong>31%</strong>
+                    </div>
+
+                    <h3>Umtru Zone</h3>
+
+                    <p>
+                        3 monitored areas
+                    </p>
+
+                    <div class="zone-bar">
+                        <div style="width:31%"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- AREA TABLE -->
+
+        <div class="dashboard-section">
+
+            <div class="section-title">
+
+                <div>
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    <div>
+                        <h2>Area Risk Monitoring</h2>
+                        <p>Latest risk information</p>
+                    </div>
+                </div>
+
+                <span>LIVE DATA</span>
+
+            </div>
+
+
+            <div class="risk-table-wrapper">
+
+                <table class="risk-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>AREA</th>
+                            <th>ZONE</th>
+                            <th>RISK</th>
+                            <th>STATUS</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <strong>Mahur</strong>
+                            </td>
+
+                            <td>Mahur Zone</td>
+
+                            <td>
+                                <strong>82%</strong>
+                            </td>
+
+                            <td>
+                                <span class="status critical">
+                                    CRITICAL
+                                </span>
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td>
+                                <strong>Jatinga</strong>
+                            </td>
+
+                            <td>Jatinga Zone</td>
+
+                            <td>
+                                <strong>61%</strong>
+                            </td>
+
+                            <td>
+                                <span class="status high">
+                                    HIGH
+                                </span>
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td>
+                                <strong>Diyungbra</strong>
+                            </td>
+
+                            <td>Diyungbra Zone</td>
+
+                            <td>
+                                <strong>48%</strong>
+                            </td>
+
+                            <td>
+                                <span class="status moderate">
+                                    MODERATE
+                                </span>
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= ZONAL HEAD DASHBOARD ================= -->
+<div id="zonalDashboard" class="role-dashboard zonal-theme">
+
+    <div class="dashboard-topbar">
+
+        <div class="dashboard-logo">
+            <span class="logo-icon">◈</span>
+            <div>
+                <strong>GeoGuard NER</strong>
+                <small>ZONAL INTELLIGENCE CENTER</small>
+            </div>
+        </div>
+
+        <div class="dashboard-live">
+            <span></span> LIVE ZONE MONITORING
+        </div>
+
+        <div class="dashboard-user">
+            <div>
+                <strong>Zonal Head</strong>
+                <small>ASSIGNED ZONE</small>
+            </div>
+
+            <button onclick="closeZonalDashboard()">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Exit
+            </button>
+        </div>
+
+    </div>
+
+    <div class="dashboard-content">
+
+        <div class="dashboard-heading dashboard-hero">
+            <div>
+                <span>ZONE INTELLIGENCE</span>
+                <h1>Dima Hasao Zone</h1>
+                <p>Focused monitoring of your assigned zone, risk indicators and active warnings.</p>
+            </div>
+            <div class="dashboard-date">
+                <i class="fa-regular fa-clock"></i>
+                SYSTEM ONLINE
+            </div>
+        </div>
+
+        <div class="dashboard-stats dashboard-stats-zonal">
+            <div class="risk-card">
+                <div class="card-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <strong>68%</strong>
+                <span>CURRENT RISK</span>
+            </div>
+            <div class="risk-card">
+                <div class="card-icon"><i class="fa-solid fa-cloud-rain"></i></div>
+                <strong>84 mm</strong>
+                <span>24H RAINFALL</span>
+            </div>
+            <div class="risk-card warning-card">
+                <div class="card-icon"><i class="fa-solid fa-droplet"></i></div>
+                <strong>71%</strong>
+                <span>SOIL MOISTURE</span>
+            </div>
+            <div class="risk-card danger-card">
+                <div class="card-icon"><i class="fa-solid fa-bell"></i></div>
+                <strong>03</strong>
+                <span>ACTIVE ALERTS</span>
+            </div>
+        </div>
+
+        <div class="dashboard-section risk-section">
+            <div class="section-title">
+                <div>
+                    <i class="fa-solid fa-chart-area"></i>
+                    <div>
+                        <h2>Assigned Zone Risk</h2>
+                        <p>Live risk assessment for Dima Hasao</p>
+                    </div>
+                </div>
+                <span>HIGH</span>
+            </div>
+
+            <div class="zonal-risk-layout">
+                <div class="zonal-risk-meter">
+                    <div class="zonal-ring"><span>68%</span></div>
+                    <div>
+                        <strong>High Risk</strong>
+                        <p>Enhanced monitoring recommended.</p>
+                    </div>
+                </div>
+                <div class="zonal-risk-bars">
+                    <div><span>Rainfall</span><b>84 mm</b><i><em style="width:84%"></em></i></div>
+                    <div><span>Soil Moisture</span><b>71%</b><i><em style="width:71%"></em></i></div>
+                    <div><span>Slope</span><b>38°</b><i><em style="width:76%"></em></i></div>
+                    <div><span>Terrain Instability</span><b>High</b><i><em style="width:68%"></em></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section environment-section">
+            <div class="section-title">
+                <div>
+                    <i class="fa-solid fa-cloud-sun"></i>
+                    <div>
+                        <h2>Environment Snapshot</h2>
+                        <p>Latest monitored conditions</p>
+                    </div>
+                </div>
+                <span>LIVE</span>
+            </div>
+
+            <div class="environment-grid">
+                <div class="environment-card"><i class="fa-solid fa-cloud-rain"></i><span>RAIN</span><strong>84 mm</strong><small>Last 24 hours</small></div>
+                <div class="environment-card"><i class="fa-solid fa-temperature-half"></i><span>TEMPERATURE</span><strong>24°C</strong><small>Current</small></div>
+                <div class="environment-card"><i class="fa-solid fa-mountain"></i><span>SLOPE</span><strong>38°</strong><small>Average monitored slope</small></div>
+                <div class="environment-card"><i class="fa-solid fa-satellite"></i><span>SATELLITE</span><strong>ONLINE</strong><small>Last sync 2 min ago</small></div>
+            </div>
+        </div>
+
+        <div class="dashboard-section alerts-panel">
+            <div class="section-title">
+                <div>
+                    <i class="fa-solid fa-bell"></i>
+                    <div>
+                        <h2>Zone Alerts</h2>
+                        <p>Actionable warnings for assigned area</p>
+                    </div>
+                </div>
+                <span>03 ACTIVE</span>
+            </div>
+            <div class="zonal-alert-list">
+                <div class="zonal-alert high"><strong>High Risk — Mahur</strong><p>Rainfall intensity increased in monitored catchments.</p><span>Updated 2 min ago</span></div>
+                <div class="zonal-alert high"><strong>High Risk — Jatinga</strong><p>Slope movement indicators require continued observation.</p><span>Updated 6 min ago</span></div>
+                <div class="zonal-alert moderate"><strong>Moderate — Umtru</strong><p>Conditions remain stable but rainfall monitoring is active.</p><span>Updated 11 min ago</span></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ================= PUBLIC DASHBOARD ================= -->
+
+<div id="publicDashboard" class="public-dashboard">
+
+    <div class="public-topbar">
+
+        <div>
+            <span class="public-eyebrow">GEOGUARD • PUBLIC ACCESS</span>
+            <h1>Your Area Safety</h1>
+            <p>
+                Live landslide risk information for your current area.
+            </p>
+        </div>
+
+        <button onclick="logoutPublicUser()" class="public-logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Exit
+        </button>
+
+    </div>
+
+
+    <div class="public-area-card">
+
+        <div class="public-area-icon">
+            <i class="fa-solid fa-location-dot"></i>
+        </div>
+
+        <div>
+            <span>YOUR CURRENT AREA</span>
+            <h2 data-public-area>Your Current Area</h2>
+            <p>
+                Data access is limited to your detected area.
+            </p>
+        </div>
+
+        <div class="public-live">
+            <span></span>
+            LIVE
+        </div>
+
+    </div>
+
+
+    <div class="public-stats">
+
+        <div class="public-stat">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>LANDSLIDE RISK</span>
+            <strong>48%</strong>
+            <small>Moderate</small>
+        </div>
+
+        <div class="public-stat">
+            <i class="fa-solid fa-cloud-rain"></i>
+            <span>RAINFALL</span>
+            <strong>42 mm</strong>
+            <small>Last 24 hours</small>
+        </div>
+
+        <div class="public-stat">
+            <i class="fa-solid fa-mountain"></i>
+            <span>TERRAIN STATUS</span>
+            <strong>STABLE</strong>
+            <small>Current assessment</small>
+        </div>
+
+    </div>
+
+
+    <div class="public-alert">
+
+        <div class="public-alert-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <div>
+            <span>SAFETY STATUS</span>
+            <h3>No active warning in your area</h3>
+            <p>
+                Continue monitoring GeoGuard for changes.
+            </p>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= PUBLIC LOGIN CLICK FIX ================= -->
+<style>
+/* Keep the public login card above its backdrop so every control is clickable. */
+#publicAccessModal {
+    pointer-events: auto !important;
+}
+
+#publicAccessModal .login-backdrop {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    pointer-events: auto !important;
+}
+
+#publicAccessModal .login-card {
+    position: relative !important;
+    z-index: 2 !important;
+    pointer-events: auto !important;
+}
+
+#publicAccessModal .login-card * {
+    pointer-events: auto;
+}
+
+#publicAccessModal .portal-login-button,
+#publicAccessModal button,
+#publicAccessModal input {
+    position: relative !important;
+    z-index: 3 !important;
+    pointer-events: auto !important;
+}
+</style>
+
+<!-- ================= PUBLIC LOGIN FIX ================= -->
+<script>
+(function () {
+    window.continuePublicAccess = function () {
+        const gmailEl = document.getElementById('publicGmail');
+        const errorEl = document.getElementById('publicLoginError');
+        const gmail = gmailEl ? gmailEl.value.trim().toLowerCase() : '';
+
+        if (errorEl) errorEl.textContent = '';
+
+        if (!gmail) {
+            if (errorEl) errorEl.textContent = 'Please enter your Gmail ID.';
+            return;
+        }
+        if (!gmail.endsWith('@gmail.com')) {
+            if (errorEl) errorEl.textContent = 'Please enter a valid Gmail ID.';
+            return;
+        }
+
+        let locationData = null;
+        try {
+            locationData = JSON.parse(sessionStorage.getItem('geoGuardLocation') || 'null');
+        } catch (e) {}
+
+        if (!locationData || !Number.isFinite(Number(locationData.latitude)) || !Number.isFinite(Number(locationData.longitude))) {
+            if (errorEl) errorEl.textContent = 'Please allow current location access.';
+            return;
+        }
+
+        const latitude = Number(locationData.latitude);
+        const longitude = Number(locationData.longitude);
+        let area = 'Dima Hasao';
+        try {
+            if (typeof resolveDemoArea === 'function') area = resolveDemoArea(latitude, longitude);
+        } catch (e) {}
+
+        sessionStorage.setItem('publicUser', JSON.stringify({
+            email: gmail, latitude: latitude, longitude: longitude, area: area
+        }));
+        sessionStorage.setItem('geoGuardRole', 'public');
+
+        const modal = document.getElementById('publicAccessModal');
+        if (modal) modal.classList.remove('active');
+
+        const portal = document.getElementById('accessPortal');
+        if (portal) portal.classList.add('portal-hidden');
+
+        ['governmentDashboard','stationDashboard','zonalDashboard','publicDashboard'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+        const dashboard = document.getElementById('publicDashboard');
+        if (!dashboard) {
+            if (errorEl) errorEl.textContent = 'Public dashboard is not connected.';
+            return;
+        }
+
+        dashboard.style.display = 'block';
+        dashboard.style.visibility = 'visible';
+        dashboard.style.opacity = '1';
+        dashboard.style.zIndex = '9999';
+        document.body.style.overflow = 'auto';
+
+        try {
+            if (typeof updatePublicArea === 'function') updatePublicArea();
+        } catch (e) { console.warn('Public area update skipped:', e); }
+        try {
+            if (typeof createNavigator === 'function') createNavigator(dashboard);
+        } catch (e) { console.warn('Navigator update skipped:', e); }
+    };
+})();
+</script>
+<!-- ================= END PUBLIC LOGIN FIX ================= -->
+
+</body>
+</html>
